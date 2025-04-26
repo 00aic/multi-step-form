@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import type { Ons } from './types'
 
 interface Item {
   id: string
@@ -13,17 +14,50 @@ interface Item {
   // isChecked: boolean
 }
 
-defineProps<{
+const props = defineProps<{
   data: Item[]
   isYearly: boolean
 }>()
+
+const onsPrice = ref<Ons[]>([
+  {
+    id: '',
+    price: '',
+  },
+])
+
+const onsIds = ref<string[]>([])
+
+const emit = defineEmits<{ update: [{ onsPrice: Ons[] }] }>()
+
+watch(onsIds, (newOnsIds: string[]) => {
+  onsPrice.value = newOnsIds?.map((id) => {
+    const selectedOns = props.data.find((item) => item.id === id)
+    if (selectedOns) {
+      return {
+        id: selectedOns.id,
+        price: props.isYearly ? selectedOns.yearly.price : selectedOns.monthly.price,
+      }
+    }
+    return { id: '', price: '' }
+  })
+  emit('update', { onsPrice: onsPrice.value })
+})
+
+const resetOns = () => {
+  onsIds.value = []
+}
+
+defineExpose({
+  resetOns,
+})
 </script>
 
 <template>
   <div class="three">
     <div v-for="item in data" :key="item.id" class="detail">
       <label class="checkbox-container"
-        ><input type="checkbox" v-model="item.id" :value="item.id" />
+        ><input type="checkbox" v-model="onsIds" :value="item.id" />
         <span class="checkmark"></span>
       </label>
 

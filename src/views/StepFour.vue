@@ -1,31 +1,21 @@
 <script setup lang="ts">
-interface Data {
-  cycle: string
-  plan: string
-  ons: Array<string>
-}
-
-interface FinishData extends Data {
-  planPrice: string
-  onsPrice?: Array<{
-    id: string
-    price: string
-  }>
-  totalTitle: string
-  totalPrice: string
-}
+import type { Billing } from './types'
 
 defineProps<{
-  data: FinishData
+  data: Billing
 }>()
 
 const emit = defineEmits<{
   change: []
 }>()
 
-const handlePlanChange = () => {
+const handlePlanStepChange = () => {
   emit('change')
 }
+
+// const totalPrice = computed(() => {
+//   return getTotalPrice(props.data)
+// })
 </script>
 
 <template>
@@ -33,8 +23,10 @@ const handlePlanChange = () => {
     <div class="content">
       <div class="plan">
         <div class="plan__billing">
-          <div class="plan__billing-title">{{ data.plan }}({{ data.cycle }})</div>
-          <div class="plan__billing-change" @click="handlePlanChange">Change</div>
+          <div class="plan__billing-title">
+            {{ data.planId }}({{ data.isYearly ? 'Yearly' : 'Monthly' }})
+          </div>
+          <div class="plan__billing-change" @click="handlePlanStepChange">Change</div>
         </div>
         <div class="plan__price">{{ data.planPrice }}</div>
       </div>

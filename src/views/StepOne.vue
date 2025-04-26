@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import type { User } from './types'
 
-interface StepOne {
-  name: string
-  email: string
-  phoneNumber: string
-}
 const emit = defineEmits<{
-  update: [data: StepOne]
+  update: [data: User]
 }>()
 
-const stepOneData = ref<StepOne>({
+const user = ref<User>({
   name: '',
   email: '',
   phoneNumber: '',
 })
 
-watch(stepOneData, (newData: StepOne) => {
+watch(user, (newData: User) => {
   emit('update', newData)
 })
 </script>
@@ -26,7 +22,7 @@ watch(stepOneData, (newData: StepOne) => {
     <div class="one__item">
       <label for="name">Name</label>
       <input
-        v-model="stepOneData.name"
+        v-model="user.name"
         class="one__item-input"
         type="text"
         id="name"
@@ -36,19 +32,20 @@ watch(stepOneData, (newData: StepOne) => {
     <div class="one__item">
       <label for="emailAddress">Email Address</label>
       <input
-        v-model="stepOneData.email"
+        v-model="user.email"
         class="one__item-input"
-        type="text"
+        type="email"
         id="emailAddress"
         placeholder="e.g.Stephenking@lorem.com"
+        required
       />
     </div>
     <div class="one__item">
       <label for="phoneNumber">Phone Number</label>
       <input
-        v-model="stepOneData.phoneNumber"
+        v-model="user.phoneNumber"
         class="one__item-input"
-        type="text"
+        type="tel"
         id="phoneNumber"
         placeholder="e.g.+1234567890"
       />

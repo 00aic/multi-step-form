@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
+import type { Plan } from './types'
 
-interface Item {
+export interface Item {
   id: string
   icon: Ref
   yearly: {
@@ -13,38 +14,61 @@ interface Item {
   }
 }
 
-defineProps<{
+const props = defineProps<{
   data: Item[]
 }>()
 
-const isPlanChecked = ref(false)
+const plan = ref<Plan>({
+  isYearly: false,
+  planId: '',
+  planPrice: '',
+})
 
-const emit = defineEmits<{ change: [] }>()
+const emit = defineEmits<{ change: []; update: [plan: Plan] }>()
 
-const handlePlanCrycleChange = () => {
-  emit('change')
-}
+watch(
+  () => plan.value.planId,
+  (newPlanId) => {
+    const selectedPlan = props.data.find((item) => item.id === newPlanId)
+    plan.value.planPrice = selectedPlan
+      ? plan.value.isYearly
+        ? selectedPlan.yearly.price
+        : selectedPlan.monthly.price
+      : ''
+    emit('update', plan.value)
+  },
+  { immediate: true },
+)
+
+watch(
+  () => plan.value.isYearly,
+  () => {
+    plan.value.planId = ''
+    plan.value.planPrice = ''
+    emit('change')
+  },
+)
 </script>
 
 <template>
   <div class="two">
     <div class="billing">
       <label class="option" v-for="item in data" :key="item.id">
-        <input type="radio" :value="item.id" v-model="item.id" />
+        <input type="radio" :value="item.id" v-model="plan.planId" />
         <div class="option__img">
           <img :src="item.icon.value" :alt="item.id" />
         </div>
         <div class="option__title">{{ item.id }}</div>
         <div class="option__price">
-          {{ isPlanChecked ? item.yearly.price : item.monthly.price }}
+          {{ plan.isYearly ? item.yearly.price : item.monthly.price }}
         </div>
-        <div v-show="isPlanChecked">{{ item.yearly.free }}</div>
+        <div class="option__free" v-show="plan.isYearly">{{ item.yearly.free }}</div>
       </label>
     </div>
     <div class="switch-container">
       <span>Monthly</span>
       <label class="switch">
-        <input type="checkbox" v-model="isPlanChecked" @change="handlePlanCrycleChange" />
+        <input type="checkbox" v-model="plan.isYearly" />
         <span class="slider"></span>
       </label>
       <span>Yearly</span>
@@ -95,6 +119,11 @@ const handlePlanCrycleChange = () => {
 
       &__price {
         color: var(--color-cool-gray);
+      }
+
+      &__free {
+        color: var(--color-marine-blue);
+        font-size: 14px;
       }
     }
   }

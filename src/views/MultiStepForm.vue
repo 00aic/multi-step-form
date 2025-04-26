@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import StepOne from './StepOne.vue'
 import StepTwo from './StepTwo.vue'
 import StepThree from './StepThree.vue'
 import StepFour from './StepFour.vue'
 import ThankYou from './ThankYou.vue'
 import { useImageUrl } from '@/composables/useImageUrl'
+import { useBillingStep } from './useBillingStep'
+
+const { billing, currentStep, nextStep, prevStep, updateBilling, emptyOnsPrice, goToStep } =
+  useBillingStep({ totalStep: 4 })
 
 interface Step {
-  no: number
   stepName: string
   stepTitle: string
   contentTitle: string
   contentDesc: string
 }
-
 interface PlanItem {
   id: string
   icon: Ref
@@ -26,7 +28,6 @@ interface PlanItem {
     price: string
   }
 }
-
 interface OnsItem {
   id: string
   desc: string
@@ -36,63 +37,28 @@ interface OnsItem {
   monthly: {
     price: string
   }
-  // isChecked: boolean
 }
-
-// const multiStepFormData = ref<Record<string, unknown>>({})
-
-interface Data {
-  cycle: string
-  plan: string
-  ons: Array<string>
-}
-
-interface FinishData extends Data {
-  planPrice: string
-  onsPrice?: Array<{
-    id: string
-    price: string
-  }>
-  totalTitle: string
-  totalPrice: string
-}
-
-const isPlanChecked = ref(false)
-
-const billingCycle = computed(() => (isPlanChecked.value ? 'Yearly' : 'Monthly'))
-
-const data = ref<Data>({
-  cycle: billingCycle.value,
-  plan: '', // 类型，arcade advanced pro
-  ons: [],
-})
-
-// data.value.cycle = computed(() => (isPlanChecked.value ? 'yearly' : 'monthly')).value
 
 const stepsList = ref<Step[]>([
   {
-    no: 1,
     stepName: 'STEP 1',
     stepTitle: 'YOUR INFO',
     contentTitle: 'Personal info',
     contentDesc: 'Please provide your name, email address, and phone number.',
   },
   {
-    no: 2,
     stepName: 'STEP 2',
     stepTitle: 'SELECT PLAN',
     contentTitle: 'Select your plan',
     contentDesc: 'You have the option of monthly or yearly billing.',
   },
   {
-    no: 3,
     stepName: 'STEP 3',
     stepTitle: 'ADD-ONS',
     contentTitle: 'Pick add-ons',
     contentDesc: 'Add-ons help enhance your gaming experience.',
   },
   {
-    no: 4,
     stepName: 'STEP 4',
     stepTitle: 'SUMMARY',
     contentTitle: 'Finishing up',
@@ -100,14 +66,7 @@ const stepsList = ref<Step[]>([
   },
 ])
 
-const selectStep = ref<Step>(stepsList.value[0])
-
-// const useImageUrl = (iconName: string) => {
-//   console.log(iconName)
-//   return new URL(`/src/assets/images/icon-${iconName}.svg`, import.meta.url).href
-// }
-
-const billingOptions: PlanItem[] = [
+const planOptions: PlanItem[] = [
   {
     id: 'Arcade',
     icon: useImageUrl('icon-arcade'),
@@ -143,17 +102,6 @@ const billingOptions: PlanItem[] = [
   },
 ]
 
-// const handlePlanSelect = (item: PlanItem) => {
-//   data.value.plan.type = item.id
-//   data.value.plan.price = data.value.plan.cycle === 0 ? item.monthlyPrice : item.yearlyPrice
-// }
-
-const handlePlanCrycleChange = () => {
-  data.value.cycle = billingCycle.value
-  data.value.plan = ''
-  data.value.ons = []
-}
-
 const onsList: OnsItem[] = [
   {
     id: 'Online service',
@@ -164,7 +112,6 @@ const onsList: OnsItem[] = [
     yearly: {
       price: '+$10/yr',
     },
-    // isChecked: false,
   },
   {
     id: 'Larger storage',
@@ -175,7 +122,6 @@ const onsList: OnsItem[] = [
     yearly: {
       price: '+$20/yr',
     },
-    // isChecked: false,
   },
   {
     id: 'Customizable Profile',
@@ -186,88 +132,35 @@ const onsList: OnsItem[] = [
     yearly: {
       price: '+$20/yr',
     },
-    // isChecked: false,
   },
 ]
 
-const finishData = ref<FinishData>({
-  cycle: billingCycle.value,
-  ons: [],
-  plan: '',
-  planPrice: '',
-  onsPrice: [],
-  totalTitle: '',
-  totalPrice: '',
-})
+const stepThreeRef = ref<InstanceType<typeof StepThree>>()
 
-const getTotalPrice = (planPrice: string, onsPrice?: { id: string; price: string }[]): string => {
-  const allPrice = [planPrice, ...(onsPrice?.map((ons) => ons.price) || [])]
-  let sum = 0
-  let suffix = ''
-  allPrice.forEach((price) => {
-    const match = price.match(/\$(\d+)\/(mo|yr)$/)
-    if (match) {
-      sum += parseInt(match[1], 10)
-      suffix = match[2]
-    }
-  })
-
-  return `+$${sum}/${suffix}`
+const handlePlanChange = () => {
+  emptyOnsPrice()
+  stepThreeRef.value?.resetOns()
 }
 
-const getFinishData = () => {
-  if (selectStep.value.no === stepsList.value.length) {
-    // finishData.value = data.value
-    const planPrice = billingOptions.find((plan: PlanItem) => plan.id === data.value.plan)
-    const onsPrice = onsList
-      ?.filter((ons) => data.value.ons.includes(ons.id))
-      .map((ons) => ({
-        id: ons.id,
-        price: isPlanChecked.value ? ons.yearly.price : ons.monthly.price,
-      }))
-
-    finishData.value = {
-      ...data.value,
-      planPrice: (isPlanChecked.value ? planPrice?.yearly.price : planPrice?.monthly.price) ?? '',
-      onsPrice: onsPrice,
-      totalTitle: '',
-      totalPrice: '',
-    }
-
-    finishData.value.totalTitle = isPlanChecked.value ? 'Total(per year)' : 'Total(per month)'
-    finishData.value.totalPrice = getTotalPrice(
-      finishData.value.planPrice,
-      finishData.value.onsPrice,
-    )
-  }
-}
-
-const handleStepSelect = (no: number) => {
-  const step = stepsList.value.find((step) => step.no === no)
-  selectStep.value = step ?? selectStep.value
+const handleStepSelect = (step: number) => {
+  goToStep(step + 1)
   isShowThankYou.value = false
-  getFinishData()
   resetError()
 }
 
-const handlePlanChange = () => {
-  const step = stepsList.value.find((step) => step.no === 2)
-  selectStep.value = step ?? selectStep.value
-  isShowThankYou.value = false
+const handlePlanStepChange = () => {
+  goToStep(2)
 }
 
 const handleGoBack = () => {
-  const step = stepsList.value.find((step) => step.no === selectStep.value.no - 1)
-  selectStep.value = step ?? selectStep.value
+  prevStep()
   isShowThankYou.value = false
   resetError()
 }
 
 const handleNextStep = () => {
-  const step = stepsList.value.find((step) => step.no === selectStep.value.no + 1)
-  selectStep.value = step ?? selectStep.value
+  nextStep()
   isShowThankYou.value = false
-  getFinishData()
 }
 const isShowThankYou = ref(false)
 
@@ -281,8 +174,7 @@ const resetError = () => {
 }
 
 const handleConfirm = () => {
-  console.log(finishData.value.plan)
-  if (!finishData.value.plan) {
+  if (!billing.value.planId) {
     isShowError.value = true
     erroMessage.value = 'Please return to step 2 to select at least one plan option'
   } else {
@@ -307,12 +199,12 @@ const handleConfirm = () => {
       <div class="steps">
         <div
           class="step"
-          v-for="item in stepsList"
-          :key="item.no"
-          @click="handleStepSelect(item.no)"
+          v-for="(item, index) in stepsList"
+          :key="`step-${index}`"
+          @click="handleStepSelect(index)"
         >
-          <div :class="['step__number', { step__select: selectStep.no === item.no }]">
-            {{ item.no }}
+          <div :class="['step__number', { step__select: currentStep === index + 1 }]">
+            {{ index + 1 }}
           </div>
           <div>
             <p class="step__name">{{ item.stepName }}</p>
@@ -324,32 +216,38 @@ const handleConfirm = () => {
     <div class="session">
       <div class="content">
         <div v-show="!isShowThankYou">
-          <h2 class="content__title">{{ selectStep.contentTitle }}</h2>
-          <p class="content__desc">{{ selectStep?.contentDesc }}</p>
+          <h2 class="content__title">{{ stepsList[currentStep - 1]?.contentTitle }}</h2>
+          <p class="content__desc">{{ stepsList[currentStep - 1]?.contentDesc }}</p>
         </div>
 
         <!-- step 1 -->
-        <StepOne v-show="!isShowThankYou && selectStep.no === 1"></StepOne>
+        <StepOne
+          @update="(data) => updateBilling(data)"
+          v-show="!isShowThankYou && currentStep === 1"
+        ></StepOne>
 
         <!-- step 2 -->
         <StepTwo
-          :data="billingOptions"
-          @change="handlePlanCrycleChange"
-          v-show="!isShowThankYou && selectStep.no === 2"
+          :data="planOptions"
+          @update="(data) => updateBilling(data)"
+          @change="handlePlanChange"
+          v-show="!isShowThankYou && currentStep === 2"
         ></StepTwo>
 
         <!-- step 3 -->
         <StepThree
+          ref="stepThreeRef"
           :data="onsList"
-          :is-yearly="isPlanChecked"
-          v-show="!isShowThankYou && selectStep.no === 3"
+          :is-yearly="billing.isYearly"
+          @update="(data) => updateBilling(data)"
+          v-show="!isShowThankYou && currentStep === 3"
         ></StepThree>
 
         <!-- step 4 -->
         <StepFour
-          :data="finishData"
-          @change="handlePlanChange"
-          v-show="!isShowThankYou && selectStep.no === 4"
+          :data="billing"
+          @change="handlePlanStepChange"
+          v-show="!isShowThankYou && currentStep === 4"
         ></StepFour>
 
         <!-- thank you -->
@@ -359,7 +257,7 @@ const handleConfirm = () => {
       <div class="button" v-show="!isShowThankYou">
         <button
           class="go-back"
-          v-show="selectStep.no !== 1"
+          v-show="currentStep !== 1"
           @click="handleGoBack"
           aria-label="Go Back"
         >
@@ -367,7 +265,7 @@ const handleConfirm = () => {
         </button>
         <button
           class="next-step"
-          v-show="selectStep.no !== stepsList.length"
+          v-show="currentStep !== stepsList.length"
           @click="handleNextStep"
           aria-label="Next Step"
         >
@@ -376,7 +274,7 @@ const handleConfirm = () => {
 
         <button
           class="confirm"
-          v-show="selectStep.no === stepsList.length"
+          v-show="currentStep === stepsList.length"
           @click="handleConfirm"
           aria-label="Confirm"
         >
