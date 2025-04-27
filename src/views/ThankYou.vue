@@ -32,4 +32,12 @@
     text-align: center;
   }
 }
+
+@media (max-width: 767px) {
+  .thank-you {
+    p {
+      font-size: 16px;
+    }
+  }
+}
 </style>

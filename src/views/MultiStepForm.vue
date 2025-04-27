@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
-import StepOne from './StepOne.vue'
-import StepTwo from './StepTwo.vue'
-import StepThree from './StepThree.vue'
-import StepFour from './StepFour.vue'
+import UserInfo from './UserInfo.vue'
+import PlanInfo from './PlanInfo.vue'
+import OnsInfo from './OnsInfo.vue'
+import FinishInfo from './FinishInfo.vue'
 import ThankYou from './ThankYou.vue'
 import { useImageUrl } from '@/composables/useImageUrl'
 import { useBillingStep } from './useBillingStep'
@@ -135,18 +135,18 @@ const onsList: OnsItem[] = [
   },
 ]
 
-const stepThreeRef = ref<InstanceType<typeof StepThree>>()
+const onsInfoRef = ref<InstanceType<typeof OnsInfo>>()
 
 const handlePlanChange = () => {
   emptyOnsPrice()
-  stepThreeRef.value?.resetOns()
+  onsInfoRef.value?.resetOns()
 }
 
-const handleStepSelect = (step: number) => {
-  goToStep(step + 1)
-  isShowThankYou.value = false
-  resetError()
-}
+// const handleStepSelect = (step: number) => {
+//   goToStep(step + 1)
+//   isShowThankYou.value = false
+//   resetError()
+// }
 
 const handlePlanStepChange = () => {
   goToStep(2)
@@ -158,8 +158,26 @@ const handleGoBack = () => {
   resetError()
 }
 
-const handleNextStep = () => {
-  nextStep()
+const userInfoRef = ref<InstanceType<typeof UserInfo>>()
+
+const handleNextStep = async () => {
+  resetError()
+  if (currentStep.value === 1) {
+    const validate = await userInfoRef.value?.validateForm()
+    if (validate) {
+      nextStep()
+    }
+  } else if (currentStep.value === 2) {
+    if (!billing.value.planId) {
+      isShowError.value = true
+      erroMessage.value = 'Please select at least one plan option'
+    } else {
+      nextStep()
+    }
+  } else {
+    nextStep()
+  }
+
   isShowThankYou.value = false
 }
 const isShowThankYou = ref(false)
@@ -174,13 +192,8 @@ const resetError = () => {
 }
 
 const handleConfirm = () => {
-  if (!billing.value.planId) {
-    isShowError.value = true
-    erroMessage.value = 'Please return to step 2 to select at least one plan option'
-  } else {
-    isShowThankYou.value = true
-    resetError()
-  }
+  isShowThankYou.value = true
+  resetError()
 }
 </script>
 
@@ -197,12 +210,7 @@ const handleConfirm = () => {
       </picture>
 
       <div class="steps">
-        <div
-          class="step"
-          v-for="(item, index) in stepsList"
-          :key="`step-${index}`"
-          @click="handleStepSelect(index)"
-        >
+        <div class="step" v-for="(item, index) in stepsList" :key="`step-${index}`">
           <div :class="['step__number', { step__select: currentStep === index + 1 }]">
             {{ index + 1 }}
           </div>
@@ -221,37 +229,41 @@ const handleConfirm = () => {
         </div>
 
         <!-- step 1 -->
-        <StepOne
+        <UserInfo
+          ref="userInfoRef"
           @update="(data) => updateBilling(data)"
           v-show="!isShowThankYou && currentStep === 1"
-        ></StepOne>
+        ></UserInfo>
 
         <!-- step 2 -->
-        <StepTwo
+        <PlanInfo
           :data="planOptions"
           @update="(data) => updateBilling(data)"
           @change="handlePlanChange"
           v-show="!isShowThankYou && currentStep === 2"
-        ></StepTwo>
+        ></PlanInfo>
 
         <!-- step 3 -->
-        <StepThree
-          ref="stepThreeRef"
+        <OnsInfo
+          ref="onsInfoRef"
           :data="onsList"
           :is-yearly="billing.isYearly"
           @update="(data) => updateBilling(data)"
           v-show="!isShowThankYou && currentStep === 3"
-        ></StepThree>
+        ></OnsInfo>
 
         <!-- step 4 -->
-        <StepFour
+        <FinishInfo
           :data="billing"
           @change="handlePlanStepChange"
           v-show="!isShowThankYou && currentStep === 4"
-        ></StepFour>
+        ></FinishInfo>
 
         <!-- thank you -->
         <ThankYou v-show="isShowThankYou"></ThankYou>
+      </div>
+      <div class="error" v-if="!isShowThankYou && isShowError">
+        {{ erroMessage }}
       </div>
 
       <div class="button" v-show="!isShowThankYou">
@@ -281,10 +293,6 @@ const handleConfirm = () => {
           Confirm
         </button>
       </div>
-
-      <div class="error" v-show="!isShowThankYou && isShowError">
-        {{ erroMessage }}
-      </div>
     </div>
   </div>
 </template>
@@ -309,7 +317,7 @@ const handleConfirm = () => {
 .step {
   display: flex;
   gap: 15px;
-  cursor: pointer;
+  // cursor: pointer;
   align-items: center;
 
   &__number {
@@ -321,7 +329,6 @@ const handleConfirm = () => {
     align-items: center;
     justify-content: center;
     color: white;
-    // background-color: var(--color-light-blue);
   }
 
   &__select {
@@ -332,7 +339,7 @@ const handleConfirm = () => {
 
   &__name {
     color: var(--color-cool-gray);
-    // font-size: 12px;
+    font-size: 12px;
   }
 
   &__title {
@@ -351,20 +358,32 @@ const handleConfirm = () => {
   display: flex;
   flex-direction: column;
   gap: 25px;
+  flex: 1;
 
   &__title {
     font-weight: bold;
     color: var(--color-marine-blue);
+    margin-bottom: 5px;
   }
 
   &__desc {
     color: var(--color-cool-gray);
+    font-size: 14px;
   }
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 15px;
+  margin-top: auto;
 }
 
 .button {
   display: flex;
   margin-top: auto;
+  flex-shrink: 0; /* 防止高度被压缩 */
 
   .go-back {
     align-self: flex-start;
@@ -405,11 +424,8 @@ const handleConfirm = () => {
   }
 }
 
-.error {
-  color: red;
-  font-weight: bold;
-  font-size: 12px;
-  padding: 15px;
+.error + .button {
+  margin-top: 0;
 }
 
 @media (max-width: 767px) {
@@ -421,18 +437,7 @@ const handleConfirm = () => {
     width: 100vw;
     border-radius: 0;
     height: 100vh;
-    // align-items: stretch;
-    // justify-content: stretch;
-    // height: calc(100vh + 160px);
-    // min-height: 50vh;
-    // justify-content: space-between;
-    // .step-img {
-    //   img {
-    //     width: 100%;
-    //     height: 100%;
-    //     object-fit: cover; /* 保证图片铺满并裁剪多余部分 */
-    //   }
-    // }
+
     .step-container {
       height: 160px;
       width: 100%;
@@ -461,7 +466,6 @@ const handleConfirm = () => {
 
     .session {
       background-color: var(--color-light-gray);
-      // position: relative;
       padding: 0;
     }
 
@@ -469,34 +473,27 @@ const handleConfirm = () => {
       position: absolute;
       top: 85px;
       background-color: white;
-      // width: 100%;
       left: 0;
       right: 0;
-      // bottom: 120px;
       margin: 15px;
       padding: 25px;
       border-radius: 10px;
-
-      // flex-grow: 0;
-      // margin-bottom: 100px;
-    }
-    .thank-you {
-      p {
-        font-size: 16px;
-      }
     }
 
     .button {
       background-color: white;
       padding: 15px;
-      // align-items: stretch;
-      // justify-content: flex-end;
-      // margin: 0;
-      // flex-grow: 1;
-      // margin-top: auto;
-      // margin-top: 400px;??
-      @media (max-height: 450px) {
+    }
+
+    @media (max-height: 450px) {
+      .error {
         margin-top: 380px;
+      }
+      .button {
+        margin-top: 380px;
+      }
+      .error + .button {
+        margin-top: 0;
       }
     }
   }

@@ -54,7 +54,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="three">
+  <div class="ons">
     <div v-for="item in data" :key="item.id" class="detail">
       <label class="checkbox-container"
         ><input type="checkbox" v-model="onsIds" :value="item.id" />
@@ -73,7 +73,7 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-.three {
+.ons {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -148,6 +148,8 @@ defineExpose({
     &__price {
       color: var(--color-purplish-blue);
       margin-left: auto;
+      font-size: 12px;
+      font-weight: bold;
     }
   }
 }

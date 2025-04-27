@@ -51,7 +51,7 @@ watch(
 </script>
 
 <template>
-  <div class="two">
+  <div class="plan">
     <div class="billing">
       <label class="option" v-for="item in data" :key="item.id">
         <input type="radio" :value="item.id" v-model="plan.planId" />
@@ -66,18 +66,20 @@ watch(
       </label>
     </div>
     <div class="switch-container">
-      <span>Monthly</span>
+      <span :class="['switch__label', { 'switch__label--isChecked': !plan.isYearly }]"
+        >Monthly</span
+      >
       <label class="switch">
         <input type="checkbox" v-model="plan.isYearly" />
         <span class="slider"></span>
       </label>
-      <span>Yearly</span>
+      <span :class="['switch__label', { 'switch__label--isChecked': plan.isYearly }]">Yearly</span>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.two {
+.plan {
   display: flex;
   flex-direction: column;
   gap: 25px;
@@ -102,6 +104,8 @@ watch(
 
       input {
         opacity: 0;
+        width: 0;
+        height: 0;
       }
       &:has(input[type='radio']:checked) {
         background-color: var(--color-purplish-blue-2);
@@ -109,7 +113,7 @@ watch(
       }
 
       &__img {
-        margin-bottom: 20px;
+        margin-bottom: 30px;
       }
 
       &__title {
@@ -119,11 +123,12 @@ watch(
 
       &__price {
         color: var(--color-cool-gray);
+        font-size: 13px;
       }
 
       &__free {
         color: var(--color-marine-blue);
-        font-size: 14px;
+        font-size: 12px;
       }
     }
   }
@@ -135,6 +140,16 @@ watch(
     border-radius: 10px;
     padding: 10px;
     justify-content: center;
+
+    .switch__label {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--color-cool-gray);
+
+      &--isChecked {
+        color: var(--color-marine-blue);
+      }
+    }
 
     .switch {
       width: 50px;
@@ -151,7 +166,7 @@ watch(
       .slider {
         border-radius: 9999px;
         position: absolute;
-        background-color: var(--color-cool-gray);
+        background-color: var(--color-marine-blue);
         cursor: pointer;
         transition: 0.3s;
         top: 0;
@@ -172,9 +187,9 @@ watch(
         }
       }
 
-      input:checked + .slider {
-        background-color: var(--color-marine-blue);
-      }
+      // input:checked + .slider {
+      //   background-color: var(--color-marine-blue);
+      // }
       input:checked + .slider::before {
         transform: translateX(20px);
       }

@@ -12,14 +12,10 @@ const emit = defineEmits<{
 const handlePlanStepChange = () => {
   emit('change')
 }
-
-// const totalPrice = computed(() => {
-//   return getTotalPrice(props.data)
-// })
 </script>
 
 <template>
-  <div class="four">
+  <div class="finish">
     <div class="content">
       <div class="plan">
         <div class="plan__billing">
@@ -30,9 +26,9 @@ const handlePlanStepChange = () => {
         </div>
         <div class="plan__price">{{ data.planPrice }}</div>
       </div>
-      <hr />
+      <hr class="hr" />
       <div class="ons" v-for="item in data.onsPrice" :key="item.id">
-        <div>{{ item.id }}</div>
+        <div class="ons__title">{{ item.id }}</div>
         <div class="ons__price">{{ item.price }}</div>
       </div>
     </div>
@@ -45,7 +41,7 @@ const handlePlanStepChange = () => {
 </template>
 
 <style lang="scss" scoped>
-.four {
+.finish {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -70,6 +66,8 @@ const handlePlanStepChange = () => {
       }
       &-change {
         cursor: pointer;
+        font-size: 14px;
+        text-decoration: underline;
       }
     }
 
@@ -80,15 +78,18 @@ const handlePlanStepChange = () => {
     }
   }
 
-  hr {
-    border-color: var(--color-alabaster);
+  .hr {
+    border: none; /* 先去掉默认边框 */
+    border-top: 1px solid var(--color-light-gray); /* 设置上边框颜色和粗细 */
   }
 
   .ons {
     display: flex;
+    font-size: 14px;
 
     &__price {
       margin-left: auto;
+      color: var(--color-marine-blue);
     }
   }
 
@@ -100,6 +101,7 @@ const handlePlanStepChange = () => {
       margin-left: auto;
       font-weight: bold;
       color: var(--color-purplish-blue);
+      font-size: 18px;
     }
   }
 }
